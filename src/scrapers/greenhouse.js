@@ -30,35 +30,37 @@ async function scrapeGreenhouse(company) {
 
         // filter only real job links
         jobs = elements
-    .filter(job => {
-        if (!job.href || !job.title) return false;
+            .filter(job => {
+                if (!job.href || !job.title) return false;
 
-        const href = job.href.toLowerCase();
-        const title = job.title.trim();
+                const href = job.href.toLowerCase();
+                const title = job.title.trim();
 
-        // must be valid job URL
-        if (!href.startsWith("/jobs/")) return false;
+                // allow multiple valid patterns
+                if (
+                    !href.includes("/jobs/") &&
+                    !href.includes("/job/")
+                ) return false;
 
-        // remove empty or garbage titles
-        if (title.length < 5) return false;
+                // remove obvious junk
+                if (title.length < 5) return false;
+                if (/department|office|team|location/i.test(title)) return false;
 
-        // remove navigation junk
-        if (/department|office|team|location/i.test(title)) return false;
-
-        // remove duplicates by weird anchors
-        if (href.includes("#")) return false;
-
-        return true;
-    })
-    .map(job => ({
-        title: job.title,
-        link: "https://boards.greenhouse.io" + job.href,
-        location: "",
-        company,
-        description: "",
-        posted_at: null,
-        source: "greenhouse"
-    }));
+                return true;
+            })
+            .map(job => ({
+                title: job.title,
+                link: job.href.startsWith("http")
+                    ? job.href
+                    : "https://boards.greenhouse.io" + job.href,
+                location: "",
+                company,
+                description: "",
+                posted_at: null,
+                source: "greenhouse"
+            }));
+            console.log(`Total links found for ${company}:`, elements.length);
+            
         // remove duplicates
         const seen = new Set();
         jobs = jobs.filter(job => {
