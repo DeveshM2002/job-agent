@@ -30,13 +30,23 @@ async function scrapeGreenhouse(company) {
 
         // filter only real job links
         jobs = elements
-            .filter(job =>
-                job.href &&
-                job.href.includes("/jobs/") &&
-                job.title &&
-                job.title.length > 5 &&
-                !job.title.toLowerCase().includes("department")
-            )
+            .filter(job => {
+                if (!job.href || !job.title) return false;
+
+                const href = job.href.toLowerCase();
+                const title = job.title.toLowerCase();
+
+                // must be actual job link
+                if (!href.includes("/jobs/")) return false;
+
+                // remove navigation / garbage
+                if (title.includes("department")) return false;
+                if (title.includes("office")) return false;
+                if (title.includes("team")) return false;
+                if (title.length < 5) return false;
+
+                return true;
+            })
             .map(job => ({
                 title: job.title,
                 link: job.href.startsWith("http")
@@ -48,7 +58,7 @@ async function scrapeGreenhouse(company) {
                 posted_at: null,
                 source: "greenhouse"
             }));
-
+        jobs = jobs.slice(0, 60);
         // remove duplicates
         const seen = new Set();
         jobs = jobs.filter(job => {
