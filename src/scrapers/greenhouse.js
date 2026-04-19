@@ -16,35 +16,26 @@ async function scrapeGreenhouse(company) {
 
         const $ = cheerio.load(data);
 
-        // 🔥 Robust extraction (instead of broken .opening selector)
-        $("a").each((_, el) => {
-            const href = $(el).attr("href");
+        $(".opening a").each((_, el) => {
             const title = $(el).text().trim();
+            const href = $(el).attr("href");
 
             if (
                 href &&
-                href.includes("/jobs/") &&
                 title &&
-                title.length > 3
+                title.length > 5 &&
+                href.startsWith("/jobs/")
             ) {
                 jobs.push({
                     title,
                     link: "https://boards.greenhouse.io" + href,
-                    location: "", // location extraction is unreliable here
+                    location: "",
                     company,
-                    description: "", // skip for now (stability)
+                    description: "",
                     posted_at: null,
                     source: "greenhouse"
                 });
             }
-        });
-
-        // 🔥 Remove duplicates inside same page
-        const seen = new Set();
-        jobs = jobs.filter(job => {
-            if (seen.has(job.link)) return false;
-            seen.add(job.link);
-            return true;
         });
 
         console.log(`Greenhouse: ${company} → ${jobs.length}`);

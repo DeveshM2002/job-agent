@@ -1,4 +1,9 @@
 {
-  "greenhouse": ["stripe", "airbnb", "notionlabs", "robinhood"],
-  "lever": []
+  "greenhouse": [
+    "stripe",
+    "databricks",
+    "discord",
+    "instacart",
+    "scaleai"
+  ]
 }
