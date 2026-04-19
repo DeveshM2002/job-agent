@@ -9,32 +9,39 @@ async function scrapeGreenhouse(company) {
 
     try {
         await page.goto(url, {
-            waitUntil: "domcontentloaded",
+            waitUntil: "networkidle",
             timeout: 30000
         });
 
-        // wait a bit to ensure page loads fully
-        await page.waitForTimeout(3000);
+        // scroll to load lazy content
+        await page.evaluate(() => {
+            window.scrollTo(0, document.body.scrollHeight);
+        });
 
-        // 🔥 universal selector (works across most greenhouse boards)
-        const elements = await page.$$eval("a[href*='/jobs/']", links =>
+        await page.waitForTimeout(2000);
+
+        // extract ALL links
+        const elements = await page.$$eval("a", links =>
             links.map(link => ({
                 title: link.innerText.trim(),
                 href: link.getAttribute("href")
             }))
         );
 
-        // filter + clean
+        // filter only real job links
         jobs = elements
             .filter(job =>
                 job.href &&
-                job.href.startsWith("/jobs/") &&
+                job.href.includes("/jobs/") &&
                 job.title &&
-                job.title.length > 5
+                job.title.length > 5 &&
+                !job.title.toLowerCase().includes("department")
             )
             .map(job => ({
                 title: job.title,
-                link: "https://boards.greenhouse.io" + job.href,
+                link: job.href.startsWith("http")
+                    ? job.href
+                    : "https://boards.greenhouse.io" + job.href,
                 location: "",
                 company,
                 description: "",
